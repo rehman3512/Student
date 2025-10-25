@@ -57,8 +57,12 @@ class SigninView extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
-                            onPressed: () {},
-                            child: TextWidget.h3(
+                            onPressed: () {
+                              authController.ForgotPassword();
+                            },
+                            child: authController.isForgot.value
+                                ? IsLoading()
+                                : TextWidget.h3(
                               "Forgot Password?",
                               AppColors.purpleColor,
                               context,
@@ -71,7 +75,7 @@ class SigninView extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           GestureDetector(
-                            onTap: (){
+                            onTap: () {
                               authController.signin();
                             },
                             child: authController.isLoading.value
