@@ -24,6 +24,7 @@ class StudentController extends GetxController {
 
   var isLoading = false.obs;
   var isLogin = false.obs;
+  var isDelete = false.obs;
   var currentIndex = 0.obs;
   var age = " ".obs;
   var gender = " ".obs;
@@ -174,6 +175,9 @@ class StudentController extends GetxController {
           "transactionName": transactionController.text,
           "status": "Pending",
           "feesStatus": "notPaid",
+          "submittedAt": FieldValue.serverTimestamp(),
+          "userEmail": FirebaseAuth.instance.currentUser!.email,
+
         });
         enrollList.add(
           EnrollModel(
@@ -349,6 +353,8 @@ class StudentController extends GetxController {
         "transactionMethod": transactionController.text,
         "status": "Pending",
         "submittedAt": FieldValue.serverTimestamp(),
+        "userEmail": FirebaseAuth.instance.currentUser!.email,
+        "userFatherName": fatherNameController.text,
       });
 
       Get.snackbar(
@@ -427,7 +433,7 @@ class StudentController extends GetxController {
 
   deleteProfile()async{
     try{
-      isLogin.value = true;
+      isDelete.value = true;
       await FirebaseFirestore.instance.collection("users").doc(getUid()).delete();
 
       authController.userController.clear();
@@ -438,7 +444,7 @@ class StudentController extends GetxController {
     }catch(e){
       ShowMessage.errorMessage("Error: ${e.toString()}");
     }finally{
-      isLogin.value = false;
+      isDelete.value = false;
     }
   }
 
