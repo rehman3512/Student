@@ -12,6 +12,7 @@ class AuthController extends GetxController {
   var isLoading = false.obs;
   var isLogin = false.obs;
   var isForgot = false.obs;
+  final RxBool isPasswordHidden = true.obs;
 
 
   var resendSeconds = 30.obs;
@@ -141,7 +142,7 @@ class AuthController extends GetxController {
   }
 
   checkLogin() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(Duration(seconds: 3));
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       Get.offAndToNamed(AppRoutes.bottomBar);
