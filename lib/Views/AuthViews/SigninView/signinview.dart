@@ -10,7 +10,6 @@ import 'package:student/Widgets/ToggleButton/togglebutton.dart';
 
 class SigninView extends StatelessWidget {
   SigninView({super.key});
-
   final authController = Get.find<AuthController>();
 
   @override
@@ -93,16 +92,18 @@ class SigninView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          GestureDetector(
-                            onTap: () {
-                              authController.signin();
-                            },
-                            child: authController.isLoading.value
-                                ? Center(child: IsLoading())
-                                : CustomButton(
-                              text: "Signin",
-                              textcolor: AppColors.whiteColor,
-                              color: AppColors.purpleColor,
+                          Obx(
+                          ()=> GestureDetector(
+                              onTap: () {
+                                authController.signin();
+                              },
+                              child: authController.isLoading.value
+                                  ? Center(child: IsLoading())
+                                  : CustomButton(
+                                text: "Signin",
+                                textcolor: AppColors.whiteColor,
+                                color: AppColors.purpleColor,
+                              ),
                             ),
                           ),
                         ],

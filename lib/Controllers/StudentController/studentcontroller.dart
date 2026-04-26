@@ -39,6 +39,7 @@ class StudentController extends GetxController {
     super.onInit();
     Future.delayed(Duration.zero, () {
       fetchSubject();
+
     });
   }
 
@@ -192,6 +193,7 @@ class StudentController extends GetxController {
         );
         ShowMessage.successMessage("Enroll Successfully");
         clearAllFields();
+        await Future.delayed(const Duration(seconds: 2));
         Get.back();
       }
     } catch (e) {
@@ -209,88 +211,6 @@ class StudentController extends GetxController {
   }
 
 
-  // ✅ Fee Submit Function
-  // Future<void> submitFee(SubjectModel subject) async {
-  //   if (authController.userController.text.isEmpty ||
-  //       fatherNameController.text.isEmpty ||
-  //       accountHolderController.text.isEmpty ||
-  //       trackIdController.text.isEmpty ||
-  //       transactionController.text.isEmpty) {
-  //     Get.snackbar(
-  //       "Error",
-  //       "All fields are required",
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //     return;
-  //   }
-  //
-  //   try {
-  //     isLoading.value = true;
-  //
-  //     // ✅ Check if a pending request exists for this subject
-  //     final docRef = FirebaseFirestore.instance
-  //         .collection("subjectForm")
-  //         .doc(subject.id)
-  //         .collection("feeRequests")
-  //         .doc(getUid());
-  //
-  //     final docSnapshot = await docRef.get();
-  //
-  //     if (docSnapshot.exists) {
-  //       final data = docSnapshot.data() as Map<String, dynamic>;
-  //       final status = data["status"] ?? "";
-  //
-  //       if (status == "Pending") {
-  //         Get.snackbar(
-  //           "Error",
-  //           "You already have a pending fee request for this subject.",
-  //           backgroundColor: Colors.red,
-  //           colorText: Colors.white,
-  //         );
-  //         return; // ✅ Stop here
-  //       }
-  //     }
-  //
-  //     // ✅ If no pending request, submit fee
-  //     await docRef.set({
-  //       "userName": authController.userController.text,
-  //       "userFatherName": fatherNameController.text,
-  //       "subjectId": subject.subjectId, // admin-created subjectId
-  //       "accountHolder": accountHolderController.text,
-  //       "trackId": trackIdController.text,
-  //       "transactionMethod": transactionController.text,
-  //       "status": "Pending",
-  //       "submittedAt": FieldValue.serverTimestamp(),
-  //     });
-  //
-  //     Get.snackbar(
-  //       "Success",
-  //       "Fee request submitted successfully",
-  //       backgroundColor: Colors.green,
-  //       colorText: Colors.white,
-  //     );
-  //
-  //     // Clear fields
-  //     authController.userController.clear();
-  //     fatherNameController.clear();
-  //     accountHolderController.clear();
-  //     trackIdController.clear();
-  //     transactionController.clear();
-  //
-  //     Get.back();
-  //   } catch (e) {
-  //     Get.snackbar(
-  //       "Error",
-  //       "Failed to submit fee: $e",
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
   Future<void> submitFee(SubjectModel subject) async {
     if (authController.userController.text.isEmpty ||
         fatherNameController.text.isEmpty ||
@@ -298,23 +218,15 @@ class StudentController extends GetxController {
         trackIdController.text.isEmpty ||
         transactionController.text.isEmpty ||
         subjectIdController.text.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "All fields are required",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      ShowMessage.errorMessage("All fields are required");
       return;
     }
 
-    // ✅ Check if entered Subject ID is valid and enrolled
-    bool isValidId = subjectList.any((s) => s.subjectId == subjectIdController.text);
+    // ✅ Check if entered Subject ID is valid and student is enrolled in THIS subject
+    bool isValidId = subjectList.any((s) => s.subjectId == subjectIdController.text && s.id == subject.id);
     if (!isValidId) {
-      Get.snackbar(
-        "Error",
+      ShowMessage.errorMessage(
         "Wrong Subject ID or you are not enrolled in this subject",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
       return;
     }
@@ -322,6 +234,7 @@ class StudentController extends GetxController {
     try {
       isLoading.value = true;
 
+      // ✅ Each subject has its own fee request document for the user
       final docRef = FirebaseFirestore.instance
           .collection("subjectForm")
           .doc(subject.id)
@@ -334,35 +247,29 @@ class StudentController extends GetxController {
         final data = docSnapshot.data() as Map<String, dynamic>;
         final status = data["status"] ?? "";
         if (status == "Pending") {
-          Get.snackbar(
-            "Error",
-            "Fee request already submitted and pending approval",
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          ShowMessage.errorMessage("Fee request already submitted and pending approval for this subject");
+          return;
+        } else if (status == "Approved") {
+          ShowMessage.errorMessage("Fee already approved for this subject");
           return;
         }
       }
 
+      // ✅ Submit fee request
       await docRef.set({
         "userName": authController.userController.text,
         "userFatherName": fatherNameController.text,
         "subjectId": subjectIdController.text,
         "accountHolder": accountHolderController.text,
         "trackId": trackIdController.text,
-        "transactionMethod": transactionController.text,
+        "transactionName": transactionController.text, // Admin style
         "status": "Pending",
+        "feesStatus": "notPaid",
         "submittedAt": FieldValue.serverTimestamp(),
         "userEmail": FirebaseAuth.instance.currentUser!.email,
-        "userFatherName": fatherNameController.text,
       });
 
-      Get.snackbar(
-        "Success",
-        "Fee request submitted successfully",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      ShowMessage.successMessage("Fee request submitted successfully");
 
       // Clear fields
       fatherNameController.clear();
@@ -371,18 +278,15 @@ class StudentController extends GetxController {
       transactionController.clear();
       subjectIdController.clear();
 
+      await Future.delayed(const Duration(seconds: 2));
       Get.back();
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Failed to submit fee: $e",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      ShowMessage.errorMessage("Failed to submit fee: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
   }
+
 
   insertProfile()async{
     try{
@@ -450,3 +354,5 @@ class StudentController extends GetxController {
 
 
 }
+
+

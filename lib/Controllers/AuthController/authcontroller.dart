@@ -76,7 +76,7 @@ class AuthController extends GetxController {
           "Error: Password must be at least 6 characters",
         );
       } else {
-        // ✅ Create user in Firebase Auth
+        //  Create user in Firebase Auth
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(
               email: emailController.text.trim(),
@@ -86,7 +86,7 @@ class AuthController extends GetxController {
         User? user = userCredential.user;
 
         if (user != null) {
-          // ✅ Save user details in Firestore
+          //  Save user details in Firestore
           await FirebaseFirestore.instance
               .collection("users")
               .doc(user.uid)
@@ -101,7 +101,7 @@ class AuthController extends GetxController {
                 "createdAt": FieldValue.serverTimestamp(),
               });
 
-          // ✅ Send verification email if not verified
+          //  Send verification email if not verified
           if (!user.emailVerified) {
             await user.sendEmailVerification();
             ShowMessage.successMessage(
@@ -112,6 +112,7 @@ class AuthController extends GetxController {
 
         ShowMessage.successMessage("Your account successfully created");
         clearFields();
+        isLogin.value = true;
         Get.offAndToNamed(AppRoutes.signinScreen);
       }
     } catch (e) {
@@ -126,7 +127,8 @@ class AuthController extends GetxController {
       isLoading.value = true;
       await FirebaseAuth.instance.signOut();
       ShowMessage.successMessage("Your successfully logout");
-      Get.offAndToNamed(AppRoutes.signupScreen);
+      clearFields();
+      Get.offAndToNamed(AppRoutes.signinScreen);
     } catch (e) {
       ShowMessage.errorMessage("Error: ${e.toString()}");
     } finally {
